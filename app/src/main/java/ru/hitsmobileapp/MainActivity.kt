@@ -123,7 +123,7 @@ fun MainMenu(onClose: () -> Unit = {}) {
         )
 
         NavigationDrawerItem(
-            label = { Text("Переменная") },
+            label = { Text("Переменная", fontSize = 25.sp) },
             selected = false,
             onClick = onClose
         )

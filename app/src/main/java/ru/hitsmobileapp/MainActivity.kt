@@ -118,18 +118,19 @@ fun MainMenu(onClose: () -> Unit = {}) {
 
         Text(
             text = "Добавление",
+            fontSize = 40.sp,
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
         NavigationDrawerItem(
-            label = { Text("Переменная") },
+            label = { Text("Переменная", fontSize = 25.sp) },
             selected = false,
             onClick = onClose
         )
 
         NavigationDrawerItem(
-            label = { Text("Операция") },
+            label = { Text("Операция", fontSize = 25.sp) },
             selected = false,
             onClick = onClose
         )

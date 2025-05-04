@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "ru.hitsmobileapp-mergeDebugResources-46:/values-v30/values-v30.xml",
+            "outputFile": "ru.hitsmobileapp-mergeDebugResources-2:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Kiril\\.gradle\\caches\\8.11.1\\transforms\\f05ef868ca0f438ebd98b29812d4e3a6\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
+                    "source": "C:\\Users\\thems\\.gradle\\caches\\8.11.1\\transforms\\f05ef868ca0f438ebd98b29812d4e3a6\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

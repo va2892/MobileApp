@@ -77,7 +77,13 @@ fun AppWithMenu() {
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Goblin Gang", fontSize = 20.sp)
+                if (variables.isEmpty()) {
+                    Text("Ваш код будет здесь", fontSize = 20.sp, color = Color.LightGray)
+                } else {
+                    VariableBlocksList(variables) { index, newValue ->
+                        variables[index] = variables[index].copy(value = newValue)
+                    }
+                }
             }
         }
     }

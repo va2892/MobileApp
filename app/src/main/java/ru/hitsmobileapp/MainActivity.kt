@@ -75,7 +75,7 @@ fun AppWithMenu() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopCenter
             ) {
                 if (variables.isEmpty()) {
                     Text("Ваш код будет здесь", fontSize = 20.sp, color = Color.LightGray)

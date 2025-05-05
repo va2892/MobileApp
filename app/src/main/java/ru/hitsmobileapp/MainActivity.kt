@@ -10,9 +10,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -22,6 +22,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.animateContentSize
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,9 +95,13 @@ fun AppWithMenu() {
                 if (variables.isEmpty()) {
                     Text("Ваш код будет здесь", fontSize = 20.sp, color = Color.LightGray)
                 } else {
-                    VariableBlocksList(variables) { index, newValue ->
-                        variables[index] = variables[index].copy(value = newValue)
-                    }
+                    VariableBlocksList(
+                        variables = variables,
+                        onValueChanged = { index, newValue ->
+                            variables[index] = variables[index].copy(value = newValue)
+                        },
+                        onDelete = { index -> variables.removeAt(index) }
+                    )
                 }
             }
         }
@@ -91,8 +110,9 @@ fun AppWithMenu() {
 
 @Composable
 fun VariableBlocksList(
-    variables: List<Variable>,
-    onValueChanged: (Int, Int?) -> Unit
+    variables: MutableList<Variable>,
+    onValueChanged: (Int, Int?) -> Unit,
+    onDelete: (Int) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -103,7 +123,8 @@ fun VariableBlocksList(
         itemsIndexed(variables) { index, variable ->
             VariableBlock(
                 variable = variable,
-                onValueChange = { newValue -> onValueChanged(index, newValue) }
+                onValueChange = { newValue -> onValueChanged(index, newValue) },
+                onDelete = { onDelete(index) }
             )
         }
     }
@@ -112,57 +133,76 @@ fun VariableBlocksList(
 @Composable
 fun VariableBlock(
     variable: Variable,
-    onValueChange: (Int?) -> Unit
+    onValueChange: (Int?) -> Unit,
+    onDelete: () -> Unit
 ) {
     var editingValue by remember { mutableStateOf(variable.value?.toString() ?: "") }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(213, 138, 255))
             .padding(16.dp)
     ) {
-        Text(
-            text = variable.name,
-            fontWeight = FontWeight.Bold,
-            fontSize = 22.sp,
-            color = Color.White,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(
+            onClick = onDelete,
+            modifier = Modifier
+                .size(24.dp)
+                .align(Alignment.TopEnd)
+        ) {
+            Icon(
+                painter = painterResource(id = android.R.drawable.ic_delete),
+                contentDescription = "Удалить",
+                tint = Color.White
+            )
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text(
-                text = "Значение: ",
-                fontSize = 16.sp,
-                color = Color.White
+                text = variable.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            BasicTextField(
-                value = editingValue,
-                onValueChange = { newText ->
-                    editingValue = newText
-                    onValueChange(newText.toIntOrNull())
-                },
-                textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-                modifier = Modifier
-                    .width(100.dp)
-                    .background(Color(195, 87, 255))
-                    .padding(8.dp),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default.copy(
-                    keyboardType = KeyboardType.Number
-                ),
-                decorationBox = { innerTextField ->
-                    if (editingValue.isEmpty()) {
-                        Text(
-                            "число",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 16.sp
-                        )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Значение: ",
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+
+                BasicTextField(
+                    value = editingValue,
+                    onValueChange = { newText ->
+                        editingValue = newText
+                        onValueChange(newText.toIntOrNull())
+                    },
+                    textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                    modifier = Modifier
+                        .width(100.dp)
+                        .background(Color(195, 87, 255))
+                        .padding(8.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    decorationBox = { innerTextField ->
+                        if (editingValue.isEmpty()) {
+                            Text(
+                                "число",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 16.sp
+                            )
+                        }
+                        innerTextField()
                     }
-                    innerTextField()
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -194,8 +234,9 @@ fun AppBar(onMenuClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun MainMenu(
-    onAddVariable: (String, Int?) -> Unit
+    onAddVariable: (String, Int?) -> Unit = { _, _ -> }
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
     var variableName by remember { mutableStateOf("") }
     var variableValue by remember { mutableStateOf("") }
 
@@ -214,67 +255,95 @@ fun MainMenu(
         )
 
         NavigationDrawerItem(
-            label = { Text("Добавить переменную", fontSize = 20.sp) },
-            selected = false,
-            onClick = {
-                onAddVariable(
-                    variableName,
-                    variableValue.toIntOrNull()
+            label = {
+                Text("Добавить переменную",
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center
                 )
-                variableName = ""
-                variableValue = ""
-            }
+            },
+            selected = false,
+            onClick = { isExpanded = !isExpanded }
         )
 
-        BasicTextField(
-            value = variableName,
-            onValueChange = { variableName = it },
-            textStyle = TextStyle(fontSize = 18.sp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .background(Color.White)
-                .padding(12.dp),
-            singleLine = true,
-            decorationBox = { innerTextField ->
-                if (variableName.isEmpty()) {
-                    Text(
-                        "Введите название",
-                        color = Color.Gray,
-                        fontSize = 18.sp
-                    )
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = slideInVertically() + expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+            exit = slideOutVertically() + shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
+            modifier = Modifier.animateContentSize()
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                BasicTextField(
+                    value = variableName,
+                    onValueChange = { variableName = it },
+                    textStyle = TextStyle(fontSize = 18.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(Color.White)
+                        .padding(12.dp),
+                    singleLine = true,
+                    decorationBox = { innerTextField ->
+                        if (variableName.isEmpty()) {
+                            Text(
+                                "Имя переменной",
+                                color = Color.Gray,
+                                fontSize = 18.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                BasicTextField(
+                    value = variableValue,
+                    onValueChange = { variableValue = it },
+                    textStyle = TextStyle(fontSize = 18.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(Color.White)
+                        .padding(12.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    decorationBox = { innerTextField ->
+                        if (variableValue.isEmpty()) {
+                            Text(
+                                "Значение переменной",
+                                color = Color.Gray,
+                                fontSize = 18.sp
+                            )
+                        }
+                        innerTextField()
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Button(
+                    onClick = {
+                        onAddVariable(variableName, variableValue.toIntOrNull())
+                        variableName = ""
+                        variableValue = ""
+                        isExpanded = false
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = variableName.isNotEmpty()
+                ) {
+                    Text("Добавить", fontSize = 18.sp)
                 }
-                innerTextField()
             }
+        }
+
+        NavigationDrawerItem(
+            label = { Text("Добавить операцию", fontSize = 20.sp, textAlign = TextAlign.Center) },
+            selected = false,
+            onClick = { }
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        BasicTextField(
-            value = variableValue,
-            onValueChange = { variableValue = it },
-            textStyle = TextStyle(fontSize = 18.sp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .background(Color.White)
-                .padding(12.dp),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number
-            ),
-            decorationBox = { innerTextField ->
-                if (variableValue.isEmpty()) {
-                    Text(
-                        "Введите значение",
-                        color = Color.Gray,
-                        fontSize = 18.sp
-                    )
-                }
-                innerTextField()
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }

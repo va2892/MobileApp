@@ -275,8 +275,6 @@ fun MainMenu(
             }
         )
 
-@Preview
-@Composable
-fun PreviewAppWithMenu() {
-    AppWithMenu()
+        Spacer(modifier = Modifier.height(16.dp))
+    }
 }

@@ -214,7 +214,7 @@ fun MainMenu(
         )
 
         NavigationDrawerItem(
-            label = { Text("Переменная", fontSize = 25.sp) },
+            label = { Text("Добавить переменную", fontSize = 20.sp) },
             selected = false,
             onClick = onClose
         )

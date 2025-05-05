@@ -248,13 +248,32 @@ fun MainMenu(
             }
         )
 
-        NavigationDrawerItem(
-            label = { Text("Операция", fontSize = 25.sp) },
-            selected = false,
-            onClick = onClose
+        Spacer(modifier = Modifier.height(8.dp))
+
+        BasicTextField(
+            value = variableValue,
+            onValueChange = { variableValue = it },
+            textStyle = TextStyle(fontSize = 18.sp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .background(Color.White)
+                .padding(12.dp),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number
+            ),
+            decorationBox = { innerTextField ->
+                if (variableValue.isEmpty()) {
+                    Text(
+                        "Введите значение",
+                        color = Color.Gray,
+                        fontSize = 18.sp
+                    )
+                }
+                innerTextField()
+            }
         )
-    }
-}
 
 @Preview
 @Composable

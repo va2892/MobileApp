@@ -47,11 +47,18 @@ fun AppWithMenu() {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            MainMenu {
-                scope.launch {
-                    drawerState.close()
+            MainMenu(
+                onAddVariable = { name, value ->
+                    variables.add(Variable(
+                        name = name.ifEmpty { "Переменная ${variables.size + 1}" },
+                        value = value
+                    ))
+
+                    scope.launch {
+                        drawerState.close()
+                    }
                 }
-            }
+            )
         },
         gesturesEnabled = true
     ) {

@@ -44,6 +44,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+data class Variable(
+    val name: String,
+    val value: Int?
+)
+
 @Composable
 fun AppWithMenu() {
     val drawerState = rememberDrawerState(DrawerValue.Closed)

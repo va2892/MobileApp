@@ -206,7 +206,6 @@ fun MainMenu(
             .background(color = Color(229, 229, 229))
             .padding(16.dp, vertical = 100.dp)
     ) {
-
         Text(
             text = "Элементы кода",
             fontSize = 35.sp,

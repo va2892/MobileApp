@@ -208,8 +208,8 @@ fun MainMenu(
     ) {
 
         Text(
-            text = "Добавление",
-            fontSize = 40.sp,
+            text = "Элементы кода",
+            fontSize = 35.sp,
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 24.dp)
         )

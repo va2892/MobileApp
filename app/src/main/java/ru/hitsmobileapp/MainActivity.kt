@@ -193,7 +193,12 @@ fun AppBar(onMenuClick: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun MainMenu(onClose: () -> Unit = {}) {
+fun MainMenu(
+    onAddVariable: (String, Int?) -> Unit
+) {
+    var variableName by remember { mutableStateOf("") }
+    var variableValue by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .width(350.dp)

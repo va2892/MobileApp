@@ -42,6 +42,7 @@ data class Variable(
 fun AppWithMenu() {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val variables = remember { mutableStateListOf<Variable>() }
 
     ModalNavigationDrawer(
         drawerState = drawerState,

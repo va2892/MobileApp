@@ -90,6 +90,84 @@ fun AppWithMenu() {
 }
 
 @Composable
+fun VariableBlocksList(
+    variables: List<Variable>,
+    onValueChanged: (Int, Int?) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        itemsIndexed(variables) { index, variable ->
+            VariableBlock(
+                variable = variable,
+                onValueChange = { newValue -> onValueChanged(index, newValue) }
+            )
+        }
+    }
+}
+
+@Composable
+fun VariableBlock(
+    variable: Variable,
+    onValueChange: (Int?) -> Unit
+) {
+    var editingValue by remember { mutableStateOf(variable.value?.toString() ?: "") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(213, 138, 255))
+            .padding(16.dp)
+    ) {
+        Text(
+            text = variable.name,
+            fontWeight = FontWeight.Bold,
+            fontSize = 22.sp,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "Значение: ",
+                fontSize = 16.sp,
+                color = Color.White
+            )
+
+            BasicTextField(
+                value = editingValue,
+                onValueChange = { newText ->
+                    editingValue = newText
+                    onValueChange(newText.toIntOrNull())
+                },
+                textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+                modifier = Modifier
+                    .width(100.dp)
+                    .background(Color(195, 87, 255))
+                    .padding(8.dp),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Number
+                ),
+                decorationBox = { innerTextField ->
+                    if (editingValue.isEmpty()) {
+                        Text(
+                            "число",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 16.sp
+                        )
+                    }
+                    innerTextField()
+                }
+            )
+        }
+    }
+}
+
+@Composable
 fun AppBar(onMenuClick: () -> Unit) {
     Box(
         modifier = Modifier

@@ -216,7 +216,36 @@ fun MainMenu(
         NavigationDrawerItem(
             label = { Text("Добавить переменную", fontSize = 20.sp) },
             selected = false,
-            onClick = onClose
+            onClick = {
+                onAddVariable(
+                    variableName,
+                    variableValue.toIntOrNull()
+                )
+                variableName = ""
+                variableValue = ""
+            }
+        )
+
+        BasicTextField(
+            value = variableName,
+            onValueChange = { variableName = it },
+            textStyle = TextStyle(fontSize = 18.sp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .background(Color.White)
+                .padding(12.dp),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                if (variableName.isEmpty()) {
+                    Text(
+                        "Введите название",
+                        color = Color.Gray,
+                        fontSize = 18.sp
+                    )
+                }
+                innerTextField()
+            }
         )
 
         NavigationDrawerItem(

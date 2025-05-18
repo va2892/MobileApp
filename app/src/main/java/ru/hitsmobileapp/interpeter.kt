@@ -5,18 +5,18 @@ class InterpreterContext {
     val outputs = mutableListOf<String>()
 
     fun evaluateExpression(expr: String): Int {
-        val replaced = expr.split(Regex("(?<=[^a-zA-Z0-9_])|(?=[^a-zA-Z0-9_])"))
-            .joinToString(" ") { token ->
-                val trimmed = token.trim()
-                when {
-                    trimmed.matches(Regex("[a-zA-Z_][a-zA-Z0-9_]*")) ->
-                        variables[trimmed]?.toString() ?: throw Exception("Unknown variable: $trimmed")
-                    trimmed.matches(Regex("\\d+")) -> trimmed
-                    trimmed in listOf("+", "-", "*", "/", "%", "(", ")") -> trimmed
-                    trimmed.isBlank() -> ""
-                    else -> throw Exception("Invalid token: $trimmed")
-                }
+        val tokens = expr.split(Regex("(?<=[^a-zA-Z0-9_])|(?=[^a-zA-Z0-9_])"))
+        val replaced = tokens.joinToString(" ") { token ->
+            val trimmed = token.trim()
+            when {
+                trimmed.matches(Regex("[a-zA-Z_][a-zA-Z0-9_]*")) ->
+                    variables[trimmed]?.toString() ?: throw Exception("Unknown variable: $trimmed")
+                trimmed.matches(Regex("\\d+")) -> trimmed
+                trimmed in listOf("+", "-", "*", "/", "%", "(", ")") -> trimmed
+                trimmed.isBlank() -> ""
+                else -> throw Exception("Invalid token: $trimmed")
             }
+        }
         return ExpressionEvaluator().eval(replaced)
     }
 }

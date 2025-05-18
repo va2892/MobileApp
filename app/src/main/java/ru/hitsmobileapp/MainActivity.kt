@@ -21,9 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.foundation.clickable
 
-val LightPurple = Color(0xFFE6E6FA)
-val DeepPurple = Color(0xFFB39DDB)
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

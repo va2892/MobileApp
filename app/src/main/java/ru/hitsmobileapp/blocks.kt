@@ -115,15 +115,20 @@ sealed class CodeBlock {
         left: String = "",
         op: String = "",
         right: String = "",
-        val body: SnapshotStateList<CodeBlock> = mutableStateListOf()
+        val body: SnapshotStateList<CodeBlock> = mutableStateListOf(),
+        val elseIfBlocks: SnapshotStateList<ElseIfBlock> = mutableStateListOf(),
+        elseBlock: ElseBlock? = null
     ) : CodeBlock() {
         var left by mutableStateOf(left)
         var op by mutableStateOf(op)
         var right by mutableStateOf(right)
 
+        var elseBlock by mutableStateOf(elseBlock)
+
         override fun execute(context: InterpreterContext) {
             val leftVal = context.evaluateExpression(left)
             val rightVal = context.evaluateExpression(right)
+
             val condition = when (op) {
                 ">" -> leftVal > rightVal
                 "<" -> leftVal < rightVal
@@ -133,9 +138,73 @@ sealed class CodeBlock {
                 "<=" -> leftVal <= rightVal
                 else -> throw Exception("Invalid operator: $op")
             }
+
             if (condition) {
-                for (cmd in body) cmd.execute(context)
+                body.forEach { it.execute(context) }
+            } else {
+                var executed = false
+                for (elseif in elseIfBlocks) {
+                    val l = context.evaluateExpression(elseif.left)
+                    val r = context.evaluateExpression(elseif.right)
+                    val cond = when (elseif.op) {
+                        ">" -> l > r
+                        "<" -> l < r
+                        "==" -> l == r
+                        "!=" -> l != r
+                        ">=" -> l >= r
+                        "<=" -> l <= r
+                        else -> throw Exception("Invalid operator: ${elseif.op}")
+                    }
+                    if (cond) {
+                        elseif.body.forEach { it.execute(context) }
+                        executed = true
+                        break
+                    }
+                }
+                if (!executed) {
+                    elseBlock?.body?.forEach { it.execute(context) }
+                }
             }
+        }
+    }
+
+    class ElseIfBlock(
+        left: String = "",
+        op: String = "",
+        right: String = "",
+        val body: SnapshotStateList<CodeBlock> = mutableStateListOf()
+    ) : CodeBlock() {
+        var left by mutableStateOf(left)
+        var op by mutableStateOf(op)
+        var right by mutableStateOf(right)
+
+        override fun execute(context: InterpreterContext) {
+            val leftVal = context.evaluateExpression(left)
+            val rightVal = context.evaluateExpression(right)
+
+            val condition = when (op) {
+                ">" -> leftVal > rightVal
+                "<" -> leftVal < rightVal
+                "==" -> leftVal == rightVal
+                "!=" -> leftVal != rightVal
+                ">=" -> leftVal >= rightVal
+                "<=" -> leftVal <= rightVal
+                else -> throw Exception("Invalid operator: $op")
+            }
+
+            if (condition) {
+                body.forEach { it.execute(context) }
+            }
+        }
+    }
+
+
+
+    class ElseBlock(
+        val body: SnapshotStateList<CodeBlock> = mutableStateListOf()
+    ) : CodeBlock() {
+        override fun execute(context: InterpreterContext) {
+            body.forEach { it.execute(context) }
         }
     }
 

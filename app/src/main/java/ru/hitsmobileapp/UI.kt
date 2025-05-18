@@ -124,6 +124,9 @@ fun IfBlockUI(block: CodeBlock.IfBlock) {
             Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) {
                 Text("expr")
             }
+            Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
+                Text("assign")
+            }
             Button(onClick = { block.elseIfBlocks.add(CodeBlock.ElseIfBlock()) }) {
                 Text("else if")
             }
@@ -188,8 +191,13 @@ fun ElseIfBlockUI(block: CodeBlock.ElseIfBlock) {
             CodeBlockUI(inner) { block.body.remove(inner) }
         }
 
-        Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) {
-            Text("expr")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) {
+                Text("expr")
+            }
+            Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
+                Text("assign")
+            }
         }
 
         Text("}", fontWeight = FontWeight.SemiBold)
@@ -224,8 +232,13 @@ fun ElseBlockUI(block: CodeBlock.ElseBlock, onDelete: () -> Unit) {
             CodeBlockUI(inner) { block.body.remove(inner) }
         }
 
-        Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) {
-            Text("expr")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) {
+                Text("expr")
+            }
+            Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
+                Text("assign")
+            }
         }
 
         Text("}", fontWeight = FontWeight.SemiBold)

@@ -37,12 +37,13 @@ fun CodeBlockInterpreter() {
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(16.dp)
+            .padding(vertical = 40.dp)
     ) {
         Text("CodeBlock Visual Interpreter", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { codeBlocks += CodeBlock.VariableDeclaration() }) { Text("+ Variable") }
-            Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text("+ Assignment") }
+            Button(onClick = { codeBlocks += CodeBlock.VariableDeclaration() }) { Text("+ Var") }
+            Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text("+ Assign") }
             Button(onClick = { codeBlocks += CodeBlock.IfBlock() }) { Text("+ If") }
             Button(onClick = { codeBlocks += CodeBlock.ExpressionBlock() }) { Text("+ Expr") }
         }

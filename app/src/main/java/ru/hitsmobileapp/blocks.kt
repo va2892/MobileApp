@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +47,11 @@ fun CodeBlockInterpreter() {
             Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text("+ Assign") }
             Button(onClick = { codeBlocks += CodeBlock.IfBlock() }) { Text("+ If") }
             Button(onClick = { codeBlocks += CodeBlock.ExpressionBlock() }) { Text("+ Expr") }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { codeBlocks += CodeBlock.WhileBlock() }) { Text("+ While") }
+            Button(onClick = { codeBlocks += CodeBlock.ForBlock() }) { Text("+ For") }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -111,6 +117,18 @@ sealed class CodeBlock {
             context.variables[trimmedVar] = value
         }
     }
+
+    class ExpressionBlock(
+        expression: String = ""
+    ) : CodeBlock() {
+        var expression by mutableStateOf(expression)
+
+        override fun execute(context: InterpreterContext) {
+            val result = context.evaluateExpression(expression)
+            context.outputs += "answer = $result"
+        }
+    }
+
 
     class IfBlock(
         left: String = "",
@@ -199,8 +217,6 @@ sealed class CodeBlock {
         }
     }
 
-
-
     class ElseBlock(
         val body: SnapshotStateList<CodeBlock> = mutableStateListOf()
     ) : CodeBlock() {
@@ -209,14 +225,72 @@ sealed class CodeBlock {
         }
     }
 
-    class ExpressionBlock(
-        expression: String = ""
+
+    class WhileBlock(
+        left: String = "",
+        op: String = "",
+        right: String = "",
+        val body: SnapshotStateList<CodeBlock> = mutableStateListOf()
     ) : CodeBlock() {
-        var expression by mutableStateOf(expression)
+        var left by mutableStateOf(left)
+        var op by mutableStateOf(op)
+        var right by mutableStateOf(right)
 
         override fun execute(context: InterpreterContext) {
-            val result = context.evaluateExpression(expression)
-            context.outputs += "answer = $result"
+            var iterationCount = 0
+
+            while (true) {
+                val leftVal = context.evaluateExpression(left)
+                val rightVal = context.evaluateExpression(right)
+
+                val condition = when (op) {
+                    ">" -> leftVal > rightVal
+                    "<" -> leftVal < rightVal
+                    "==" -> leftVal == rightVal
+                    "!=" -> leftVal != rightVal
+                    ">=" -> leftVal >= rightVal
+                    "<=" -> leftVal <= rightVal
+                    else -> throw Exception("Invalid operator: $op")
+                }
+
+                if (!condition) break
+
+                if (iterationCount++ > 1000) throw Exception("Possible infinite loop")
+                body.forEach { it.execute(context) }
+            }
+        }
+    }
+
+    class ForBlock(
+        variable: String = "i",
+        from: String = "",
+        to: String = "",
+        step: String = "1",
+        val body: SnapshotStateList<CodeBlock> = mutableStateListOf()
+    ) : CodeBlock() {
+        var variable by mutableStateOf(variable)
+        var from by mutableStateOf(from)
+        var to by mutableStateOf(to)
+        var step by mutableStateOf(step)
+
+        override fun execute(context: InterpreterContext) {
+            val name = variable.trim()
+            var i = context.evaluateExpression(from)
+            val end = context.evaluateExpression(to)
+            val step = context.evaluateExpression(step)
+            var iterations = 0
+
+            if (name.isEmpty())
+                throw Exception("Invalid variable name: '$name'")
+
+            if (step == 0) throw Exception("Step cannot be zero")
+
+            while ((step > 0 && i <= end) || (step < 0 && i >= end)) {
+                if (iterations++ > 1000) throw Exception("possible infinite loop")
+                context.outputs += "$name: $i"
+                body.forEach { it.execute(context) }
+                i += step
+            }
         }
     }
 }

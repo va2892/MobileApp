@@ -1,5 +1,9 @@
 package ru.hitsmobileapp
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
 class InterpreterContext {
     val variables = mutableMapOf<String, Int>()
     val outputs = mutableListOf<String>()

@@ -46,6 +46,8 @@ fun CodeBlockUI(block: CodeBlock, onDelete: () -> Unit) {
                 is CodeBlock.ExpressionBlock -> ExpressionBlockUI(block)
                 is CodeBlock.ElseIfBlock -> ElseIfBlockUI(block)
                 is CodeBlock.ElseBlock -> ElseBlockUI(block) { onDelete() }
+                is CodeBlock.WhileBlock -> WhileBlockUI(block)
+                is CodeBlock.ForBlock -> ForBlockUI(block)
             }
         }
     }
@@ -97,6 +99,29 @@ fun AssignmentBlock(block: CodeBlock.Assignment) {
         )
     }
 }
+
+@Composable
+fun ExpressionBlockUI(block: CodeBlock.ExpressionBlock) {
+    OutlinedTextField(
+        value = block.expression,
+        onValueChange = { block.expression = it },
+        label = { Text("Expression (e.g. (a + b) * 2)") },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        singleLine = false,
+        maxLines = 3,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = LightPurple,
+            unfocusedContainerColor = LightPurple,
+            focusedLabelColor = DeepPurple,
+            unfocusedLabelColor = DeepPurple,
+            focusedBorderColor = DeepPurple,
+            unfocusedBorderColor = DeepPurple
+        )
+    )
+}
+
 
 @Composable
 fun IfBlockUI(block: CodeBlock.IfBlock) {
@@ -204,8 +229,6 @@ fun ElseIfBlockUI(block: CodeBlock.ElseIfBlock) {
     }
 }
 
-
-
 @Composable
 fun ElseBlockUI(block: CodeBlock.ElseBlock, onDelete: () -> Unit) {
     Column(
@@ -247,23 +270,110 @@ fun ElseBlockUI(block: CodeBlock.ElseBlock, onDelete: () -> Unit) {
 
 
 @Composable
-fun ExpressionBlockUI(block: CodeBlock.ExpressionBlock) {
-    OutlinedTextField(
-        value = block.expression,
-        onValueChange = { block.expression = it },
-        label = { Text("Expression (e.g. (a + b) * 2)") },
+fun WhileBlockUI(block: CodeBlock.WhileBlock) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
-        singleLine = false,
-        maxLines = 3,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = LightPurple,
-            unfocusedContainerColor = LightPurple,
-            focusedLabelColor = DeepPurple,
-            unfocusedLabelColor = DeepPurple,
-            focusedBorderColor = DeepPurple,
-            unfocusedBorderColor = DeepPurple
-        )
-    )
+            .padding(4.dp)
+            .border(1.dp, Color(0xFF8888AA))
+            .background(Color(0xFFE0F7FA))
+            .padding(8.dp)
+    ) {
+        Text("while (...) {", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = block.left,
+                onValueChange = { block.left = it },
+                label = { Text("Left") },
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = block.op,
+                onValueChange = { block.op = it },
+                label = { Text("Operator") },
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = block.right,
+                onValueChange = { block.right = it },
+                label = { Text("Right") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        block.body.forEach { inner ->
+            CodeBlockUI(inner) { block.body.remove(inner) }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) {
+                Text("expr")
+            }
+            Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
+                Text("assign")
+            }
+        }
+
+        Text("}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+fun ForBlockUI(block: CodeBlock.ForBlock) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp)
+            .border(1.dp, Color(0xFF9C27B0))
+            .background(Color(0xFFF3E5F5))
+            .padding(8.dp)
+    ) {
+        Text("for (...) {", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = block.variable,
+                onValueChange = { block.variable = it },
+                label = { Text("Variable (e.g. i)") },
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = block.from,
+                onValueChange = { block.from = it },
+                label = { Text("From") },
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = block.to,
+                onValueChange = { block.to = it },
+                label = { Text("To") },
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = block.step,
+                onValueChange = { block.step = it },
+                label = { Text("Step") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        block.body.forEach { inner ->
+            CodeBlockUI(inner) { block.body.remove(inner) }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { block.body.add(CodeBlock.Assignment()) }) { Text("assign") }
+            Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) { Text("expr") }
+        }
+
+        Text("}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    }
 }

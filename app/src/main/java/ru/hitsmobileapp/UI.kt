@@ -48,6 +48,10 @@ fun CodeBlockUI(block: CodeBlock, onDelete: () -> Unit) {
                 is CodeBlock.ElseBlock -> ElseBlockUI(block) { onDelete() }
                 is CodeBlock.WhileBlock -> WhileBlockUI(block)
                 is CodeBlock.ForBlock -> ForBlockUI(block)
+                is CodeBlock.ArrayDeclaration -> ArrayDeclarationBlock(block)
+                is CodeBlock.ArrayAssignment -> ArrayAssignmentBlock(block)
+                is CodeBlock.SwapBlock -> SwapBlockUI(block)
+                is CodeBlock.ArrayFillBlock -> ArrayFillBlockUI(block)
             }
         }
     }
@@ -152,6 +156,9 @@ fun IfBlockUI(block: CodeBlock.IfBlock) {
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
                 Text("assign")
             }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
+                Text("swap")
+            }
             Button(onClick = { block.elseIfBlocks.add(CodeBlock.ElseIfBlock()) }) {
                 Text("else if")
             }
@@ -222,6 +229,9 @@ fun ElseIfBlockUI(block: CodeBlock.ElseIfBlock) {
             }
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
                 Text("assign")
+            }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
+                Text("swap")
             }
         }
 
@@ -318,6 +328,9 @@ fun WhileBlockUI(block: CodeBlock.WhileBlock) {
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
                 Text("assign")
             }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
+                Text("swap")
+            }
         }
 
         Text("}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -372,8 +385,122 @@ fun ForBlockUI(block: CodeBlock.ForBlock) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) { Text("assign") }
             Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) { Text("expr") }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) { Text("swap") }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { block.body.add(CodeBlock.ForBlock()) }) { Text("for") }
+            Button(onClick = { block.body.add(CodeBlock.IfBlock()) }) { Text("if") }
         }
 
         Text("}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+
+@Composable
+fun ArrayDeclarationBlock(block: CodeBlock.ArrayDeclaration) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = block.name,
+            onValueChange = { block.name = it },
+            label = { Text("Array Name") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        OutlinedTextField(
+            value = block.size,
+            onValueChange = { block.size = it },
+            label = { Text("Size (e.g. 5)") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+    }
+}
+
+@Composable
+fun ArrayAssignmentBlock(block: CodeBlock.ArrayAssignment) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = block.name,
+            onValueChange = { block.name = it },
+            label = { Text("Array Name") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+        Text("[", fontSize = 18.sp)
+        OutlinedTextField(
+            value = block.index,
+            onValueChange = { block.index = it },
+            label = { Text("Index") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+        Text("] = ", fontSize = 18.sp)
+        OutlinedTextField(
+            value = block.expression,
+            onValueChange = { block.expression = it },
+            label = { Text("Expression") },
+            modifier = Modifier.weight(2f),
+            singleLine = true
+        )
+    }
+}
+
+@Composable
+fun SwapBlockUI(block: CodeBlock.SwapBlock) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = block.first,
+            onValueChange = { block.first = it },
+            label = { Text("First (a or arr[0])") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+        Text("<->", modifier = Modifier.padding(horizontal = 8.dp))
+        OutlinedTextField(
+            value = block.second,
+            onValueChange = { block.second = it },
+            label = { Text("Second (b or arr[1])") },
+            modifier = Modifier.weight(1f),
+            singleLine = true
+        )
+    }
+}
+
+@Composable
+fun ArrayFillBlockUI(block: CodeBlock.ArrayFillBlock) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(4.dp)
+    ) {
+        OutlinedTextField(
+            value = block.name,
+            onValueChange = { block.name = it },
+            label = { Text("Array name (e.g. arr)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = block.values,
+            onValueChange = { block.values = it },
+            label = { Text("Values (e.g. 5, 3, 2)") },
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

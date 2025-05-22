@@ -44,14 +44,24 @@ fun CodeBlockInterpreter() {
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { codeBlocks += CodeBlock.VariableDeclaration() }) { Text("+ Var") }
-            Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text("+ Assign") }
-            Button(onClick = { codeBlocks += CodeBlock.IfBlock() }) { Text("+ If") }
-            Button(onClick = { codeBlocks += CodeBlock.ExpressionBlock() }) { Text("+ Expr") }
+            Button(onClick = { codeBlocks += CodeBlock.ArrayDeclaration() }) { Text("+ Arr") }
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { codeBlocks += CodeBlock.IfBlock() }) { Text("+ If") }
             Button(onClick = { codeBlocks += CodeBlock.WhileBlock() }) { Text("+ While") }
             Button(onClick = { codeBlocks += CodeBlock.ForBlock() }) { Text("+ For") }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text("Var =") }
+            Button(onClick = { codeBlocks += CodeBlock.ArrayAssignment() }) { Text("arr[i] =") }
+            Button(onClick = { codeBlocks += CodeBlock.ArrayFillBlock() }) { Text("arr = ") }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { codeBlocks += CodeBlock.SwapBlock() }) { Text("Swap") }
+            Button(onClick = { codeBlocks += CodeBlock.ExpressionBlock() }) { Text("+ Expr") }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -66,9 +76,19 @@ fun CodeBlockInterpreter() {
             try {
                 val context = InterpreterContext()
                 codeBlocks.forEach { it.execute(context) }
+
                 val variableLines = context.variables.entries.joinToString("\n") { "${it.key} = ${it.value}" }
+
+                val arrayLines = context.arrays.entries.joinToString("\n") { (name, array) ->
+                    "$name = [${array.joinToString(", ")}]"
+                }
+
                 val expressionLines = context.outputs.joinToString("\n")
-                output = listOf(variableLines, expressionLines).filter { it.isNotBlank() }.joinToString("\n")
+
+                output = listOf(variableLines, arrayLines, expressionLines)
+                    .filter { it.isNotBlank() }
+                    .joinToString("\n")
+
                 error = null
             } catch (e: Exception) {
                 error = e.message
@@ -291,6 +311,98 @@ sealed class CodeBlock {
                 body.forEach { it.execute(context) }
                 i += step
             }
+        }
+    }
+
+
+    class ArrayDeclaration(name: String = "", size: String = "") : CodeBlock() {
+        var name by mutableStateOf(name)
+        var size by mutableStateOf(size)
+
+        override fun execute(context: InterpreterContext) {
+            val arraySize = context.evaluateExpression(size)
+            if (arraySize <= 0) throw Exception("Invalid array size")
+            context.arrays[name.trim()] = IntArray(arraySize)
+        }
+    }
+
+    class ArrayAssignment(
+        name: String = "",
+        index: String = "",
+        expression: String = ""
+    ) : CodeBlock() {
+        var name by mutableStateOf(name)
+        var index by mutableStateOf(index)
+        var expression by mutableStateOf(expression)
+
+        override fun execute(context: InterpreterContext) {
+            val idx = context.evaluateExpression(index)
+            val value = context.evaluateExpression(expression)
+            context.setArrayValue(name.trim(), idx, value)
+        }
+    }
+
+    class SwapBlock(first: String = "", second: String = "") : CodeBlock() {
+        var first by mutableStateOf(first)
+        var second by mutableStateOf(second)
+
+        override fun execute(context: InterpreterContext) {
+            val f = first.trim()
+            val s = second.trim()
+
+            val isArrayAccess = { str: String -> str.matches(Regex("""[a-zA-Z_][a-zA-Z0-9_]*\[\d+]""")) }
+
+            fun parseArrayIndex(expr: String): Pair<String, Int> {
+                val match = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)]""").find(expr)
+                    ?: throw Exception("Invalid array syntax: $expr")
+                val name = match.groupValues[1]
+                val index = match.groupValues[2].toInt()
+                return name to index
+            }
+
+            if (isArrayAccess(f) && isArrayAccess(s)) {
+                val (name1, index1) = parseArrayIndex(f)
+                val (name2, index2) = parseArrayIndex(s)
+
+                val arr1 = context.arrays[name1] ?: throw Exception("Unknown array: $name1")
+                val arr2 = context.arrays[name2] ?: throw Exception("Unknown array: $name2")
+
+                val temp = arr1[index1]
+                arr1[index1] = arr2[index2]
+                arr2[index2] = temp
+
+            } else if (!isArrayAccess(f) && !isArrayAccess(s)) {
+                if (!context.variables.containsKey(f) || !context.variables.containsKey(s)) {
+                    throw Exception("Unknown variable(s): $f or $s")
+                }
+                val temp = context.variables[f]!!
+                context.variables[f] = context.variables[s]!!
+                context.variables[s] = temp
+
+            } else {
+                throw Exception("Cannot swap array element with variable")
+            }
+        }
+    }
+
+    class ArrayFillBlock(
+        name: String = "",
+        values: String = ""
+    ) : CodeBlock() {
+        var name by mutableStateOf(name)
+        var values by mutableStateOf(values)
+
+        override fun execute(context: InterpreterContext) {
+            val arrayName = name.trim()
+            if (!context.arrays.containsKey(arrayName)) {
+                throw Exception("Array '$arrayName' is not declared")
+            }
+
+            val parsedValues = values.split(",").map { it.trim() }.map {
+                context.evaluateExpression(it)
+            }
+
+            context.arrays[arrayName] = parsedValues.toIntArray()
         }
     }
 }

@@ -7,12 +7,19 @@ import androidx.compose.runtime.setValue
 class InterpreterContext {
     val variables = mutableMapOf<String, Int>()
     val outputs = mutableListOf<String>()
+    val arrays = mutableMapOf<String, IntArray>()
 
     fun evaluateExpression(expr: String): Int {
         val tokens = expr.split(Regex("(?<=[^a-zA-Z0-9_])|(?=[^a-zA-Z0-9_])"))
         val replaced = tokens.joinToString(" ") { token ->
             val trimmed = token.trim()
             when {
+                token.matches(Regex("[a-zA-Z_][a-zA-Z0-9_]*\\[.*]")) -> {
+                    val arrayName = token.substringBefore("[")
+                    val indexExpr = token.substringAfter("[").removeSuffix("]")
+                    getArrayValue(arrayName, evaluateExpression(indexExpr)).toString()
+                }
+
                 trimmed.matches(Regex("[a-zA-Z_][a-zA-Z0-9_]*")) ->
                     variables[trimmed]?.toString() ?: throw Exception("Unknown variable: $trimmed")
                 trimmed.matches(Regex("\\d+")) -> trimmed
@@ -22,6 +29,18 @@ class InterpreterContext {
             }
         }
         return ExpressionEvaluator().eval(replaced)
+    }
+
+    fun getArrayValue(name: String, index: Int): Int {
+        val arr = arrays[name] ?: throw Exception("Unknown array: $name")
+        if (index !in arr.indices) throw Exception("Array index out of bounds: $index")
+        return arr[index]
+    }
+
+    fun setArrayValue(name: String, index: Int, value: Int) {
+        val arr = arrays[name] ?: throw Exception("Unknown array: $name")
+        if (index !in arr.indices) throw Exception("Array index out of bounds: $index")
+        arr[index] = value
     }
 }
 

@@ -156,6 +156,9 @@ fun IfBlockUI(block: CodeBlock.IfBlock) {
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
                 Text("assign")
             }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
+                Text("swap")
+            }
             Button(onClick = { block.elseIfBlocks.add(CodeBlock.ElseIfBlock()) }) {
                 Text("else if")
             }
@@ -226,6 +229,9 @@ fun ElseIfBlockUI(block: CodeBlock.ElseIfBlock) {
             }
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
                 Text("assign")
+            }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
+                Text("swap")
             }
         }
 
@@ -322,6 +328,9 @@ fun WhileBlockUI(block: CodeBlock.WhileBlock) {
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) {
                 Text("assign")
             }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
+                Text("swap")
+            }
         }
 
         Text("}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -376,6 +385,12 @@ fun ForBlockUI(block: CodeBlock.ForBlock) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { block.body.add(CodeBlock.Assignment()) }) { Text("assign") }
             Button(onClick = { block.body.add(CodeBlock.ExpressionBlock()) }) { Text("expr") }
+            Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) { Text("swap") }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { block.body.add(CodeBlock.ForBlock()) }) { Text("for") }
+            Button(onClick = { block.body.add(CodeBlock.IfBlock()) }) { Text("if") }
         }
 
         Text("}", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)

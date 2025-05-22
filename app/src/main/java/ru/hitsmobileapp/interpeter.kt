@@ -10,103 +10,101 @@ class InterpreterContext {
     val arrays = mutableMapOf<String, IntArray>()
 
     fun evaluateExpression(expr: String): Int {
-        val tokens = expr.split(Regex("(?<=[^a-zA-Z0-9_])|(?=[^a-zA-Z0-9_])"))
-        val replaced = tokens.joinToString(" ") { token ->
-            val trimmed = token.trim()
-            when {
-                token.matches(Regex("[a-zA-Z_][a-zA-Z0-9_]*\\[.*]")) -> {
-                    val arrayName = token.substringBefore("[")
-                    val indexExpr = token.substringAfter("[").removeSuffix("]")
-                    getArrayValue(arrayName, evaluateExpression(indexExpr)).toString()
-                }
+        val trimmed = expr.trim()
 
-                trimmed.matches(Regex("[a-zA-Z_][a-zA-Z0-9_]*")) ->
-                    variables[trimmed]?.toString() ?: throw Exception("Unknown variable: $trimmed")
-                trimmed.matches(Regex("\\d+")) -> trimmed
-                trimmed in listOf("+", "-", "*", "/", "%", "(", ")") -> trimmed
-                trimmed.isBlank() -> ""
-                else -> throw Exception("Invalid token: $trimmed")
-            }
+        val arrayAccessRegex = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\[(.+)]""")
+        val match = arrayAccessRegex.matchEntire(trimmed)
+        if (match != null) {
+            val arrayName = match.groupValues[1]
+            val indexExpr = match.groupValues[2]
+            val index = evaluateExpression(indexExpr)
+            val array = arrays[arrayName] ?: throw Exception("Array '$arrayName' not found")
+            if (index !in array.indices) throw Exception("Index $index out of bounds")
+            return array[index]
         }
-        return ExpressionEvaluator().eval(replaced)
+
+        val evaluator = SimpleMathEvaluator(variables)
+        return evaluator.eval(trimmed)
     }
 
-    fun getArrayValue(name: String, index: Int): Int {
-        val arr = arrays[name] ?: throw Exception("Unknown array: $name")
-        if (index !in arr.indices) throw Exception("Array index out of bounds: $index")
-        return arr[index]
+    class SimpleMathEvaluator(private val variables: Map<String, Int> = emptyMap()) {
+
+        fun eval(expression: String): Int {
+            val replaced = replaceVariables(expression)
+            val tokens = tokenize(replaced)
+            val postfix = infixToPostfix(tokens)
+            return evaluatePostfix(postfix)
+        }
+
+        private fun replaceVariables(expression: String): String {
+            var result = expression
+            for ((key, value) in variables) {
+                result = result.replace("\\b$key\\b".toRegex(), value.toString())
+            }
+            return result
+        }
+
+        private fun tokenize(expr: String): List<String> {
+            val regex = Regex("""\d+|[()+\-*/]""")
+            return regex.findAll(expr.replace(" ", "")).map { it.value }.toList()
+        }
+
+        private fun infixToPostfix(tokens: List<String>): List<String> {
+            val precedence = mapOf("+" to 1, "-" to 1, "*" to 2, "/" to 2)
+            val output = mutableListOf<String>()
+            val stack = ArrayDeque<String>()
+
+            for (token in tokens) {
+                when {
+                    token.matches(Regex("""\d+""")) -> output.add(token)
+                    token in "+-*/" -> {
+                        while (stack.isNotEmpty() && precedence[token]!! <= precedence[stack.last()] ?: 0) {
+                            output.add(stack.removeLast())
+                        }
+                        stack.addLast(token)
+                    }
+                    token == "(" -> stack.addLast(token)
+                    token == ")" -> {
+                        while (stack.isNotEmpty() && stack.last() != "(") {
+                            output.add(stack.removeLast())
+                        }
+                        if (stack.isNotEmpty() && stack.last() == "(") stack.removeLast()
+                    }
+                }
+            }
+            while (stack.isNotEmpty()) {
+                output.add(stack.removeLast())
+            }
+            return output
+        }
+
+        private fun evaluatePostfix(postfix: List<String>): Int {
+            val stack = ArrayDeque<Int>()
+            for (token in postfix) {
+                when {
+                    token.matches(Regex("""\d+""")) -> stack.addLast(token.toInt())
+                    token in "+-*/" -> {
+                        val b = stack.removeLast()
+                        val a = stack.removeLast()
+                        val res = when (token) {
+                            "+" -> a + b
+                            "-" -> a - b
+                            "*" -> a * b
+                            "/" -> if (b != 0) a / b else throw Exception("Division by zero")
+                            else -> throw Exception("Invalid operator: $token")
+                        }
+                        stack.addLast(res)
+                    }
+                }
+            }
+            return stack.last()
+        }
     }
 
     fun setArrayValue(name: String, index: Int, value: Int) {
-        val arr = arrays[name] ?: throw Exception("Unknown array: $name")
-        if (index !in arr.indices) throw Exception("Array index out of bounds: $index")
-        arr[index] = value
+        val array = arrays[name] ?: throw Exception("Array '$name' not declared")
+        if (index !in array.indices) throw Exception("Index $index out of bounds")
+        array[index] = value
     }
 }
 
-class ExpressionEvaluator {
-    fun eval(expression: String): Int {
-        try {
-            return object {
-                var pos = -1
-                var ch = 0
-                fun nextChar() {
-                    ch = if (++pos < expression.length) expression[pos].code else -1
-                }
-                fun eat(charToEat: Int): Boolean {
-                    while (ch == ' '.code) nextChar()
-                    if (ch == charToEat) {
-                        nextChar()
-                        return true
-                    }
-                    return false
-                }
-                fun parse(): Int {
-                    nextChar()
-                    val x = parseExpression()
-                    if (pos < expression.length) throw RuntimeException("Unexpected: ${expression[pos]}")
-                    return x
-                }
-                fun parseExpression(): Int {
-                    var x = parseTerm()
-                    while (true) {
-                        x = when {
-                            eat('+'.code) -> x + parseTerm()
-                            eat('-'.code) -> x - parseTerm()
-                            else -> return x
-                        }
-                    }
-                }
-                fun parseTerm(): Int {
-                    var x = parseFactor()
-                    while (true) {
-                        x = when {
-                            eat('*'.code) -> x * parseFactor()
-                            eat('/'.code) -> x / parseFactor()
-                            eat('%'.code) -> x % parseFactor()
-                            else -> return x
-                        }
-                    }
-                }
-                fun parseFactor(): Int {
-                    if (eat('+'.code)) return parseFactor()
-                    if (eat('-'.code)) return -parseFactor()
-                    var x: Int
-                    val startPos = pos
-                    if (eat('('.code)) {
-                        x = parseExpression()
-                        eat(')'.code)
-                    } else if (ch in '0'.code..'9'.code) {
-                        while (ch in '0'.code..'9'.code) nextChar()
-                        x = expression.substring(startPos, pos).toInt()
-                    } else {
-                        throw RuntimeException("Unexpected: ${ch.toChar()}")
-                    }
-                    return x
-                }
-            }.parse()
-        } catch (e: Exception) {
-            throw Exception("Ошибка в выражении: ${e.message}")
-        }
-    }
-}

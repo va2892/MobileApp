@@ -165,46 +165,46 @@ sealed class CodeBlock {
         var elseBlock by mutableStateOf(elseBlock)
 
         override fun execute(context: InterpreterContext) {
-            val leftVal = context.evaluateExpression(left)
-            val rightVal = context.evaluateExpression(right)
+                    val leftVal = context.evaluateExpression(left)
+                    val rightVal = context.evaluateExpression(right)
 
-            val condition = when (op) {
-                ">" -> leftVal > rightVal
-                "<" -> leftVal < rightVal
-                "==" -> leftVal == rightVal
-                "!=" -> leftVal != rightVal
-                ">=" -> leftVal >= rightVal
-                "<=" -> leftVal <= rightVal
-                else -> throw Exception("Invalid operator: $op")
-            }
-
-            if (condition) {
-                body.forEach { it.execute(context) }
-            } else {
-                var executed = false
-                for (elseif in elseIfBlocks) {
-                    val l = context.evaluateExpression(elseif.left)
-                    val r = context.evaluateExpression(elseif.right)
-                    val cond = when (elseif.op) {
-                        ">" -> l > r
-                        "<" -> l < r
-                        "==" -> l == r
-                        "!=" -> l != r
-                        ">=" -> l >= r
-                        "<=" -> l <= r
-                        else -> throw Exception("Invalid operator: ${elseif.op}")
+                    val condition = when (op) {
+                        ">" -> leftVal > rightVal
+                        "<" -> leftVal < rightVal
+                        "==" -> leftVal == rightVal
+                        "!=" -> leftVal != rightVal
+                        ">=" -> leftVal >= rightVal
+                        "<=" -> leftVal <= rightVal
+                        else -> throw Exception("Invalid operator: $op")
                     }
-                    if (cond) {
-                        elseif.body.forEach { it.execute(context) }
-                        executed = true
-                        break
+
+                    if (condition) {
+                        body.forEach { it.execute(context) }
+                    } else {
+                        var executed = false
+                        for (elseif in elseIfBlocks) {
+                            val l = context.evaluateExpression(elseif.left)
+                            val r = context.evaluateExpression(elseif.right)
+                            val cond = when (elseif.op) {
+                                ">" -> l > r
+                                "<" -> l < r
+                                "==" -> l == r
+                                "!=" -> l != r
+                                ">=" -> l >= r
+                                "<=" -> l <= r
+                                else -> throw Exception("Invalid operator: ${elseif.op}")
+                            }
+                            if (cond) {
+                                elseif.body.forEach { it.execute(context) }
+                                executed = true
+                                break
+                            }
+                        }
+                        if (!executed) {
+                            elseBlock?.body?.forEach { it.execute(context) }
+                        }
                     }
                 }
-                if (!executed) {
-                    elseBlock?.body?.forEach { it.execute(context) }
-                }
-            }
-        }
     }
 
     class ElseIfBlock(
@@ -297,19 +297,24 @@ sealed class CodeBlock {
             val name = variable.trim()
             var i = context.evaluateExpression(from)
             val end = context.evaluateExpression(to)
-            val step = context.evaluateExpression(step)
+            val stepVal = context.evaluateExpression(step)
             var iterations = 0
 
             if (name.isEmpty())
                 throw Exception("Invalid variable name: '$name'")
+            if (stepVal == 0) throw Exception("Step cannot be zero")
 
-            if (step == 0) throw Exception("Step cannot be zero")
+            context.variables[name] = i
 
-            while ((step > 0 && i <= end) || (step < 0 && i >= end)) {
-                if (iterations++ > 1000) throw Exception("possible infinite loop")
-                context.outputs += "$name: $i"
-                body.forEach { it.execute(context) }
-                i += step
+            try {
+                while ((stepVal > 0 && i <= end) || (stepVal < 0 && i >= end)) {
+                    if (iterations++ > 1000) throw Exception("possible infinite loop")
+                    context.variables[name] = i
+                    body.forEach { it.execute(context) }
+                    i += stepVal
+                }
+            } finally {
+                context.variables.remove(name)
             }
         }
     }
@@ -350,13 +355,14 @@ sealed class CodeBlock {
             val f = first.trim()
             val s = second.trim()
 
-            val isArrayAccess = { str: String -> str.matches(Regex("""[a-zA-Z_][a-zA-Z0-9_]*\[\d+]""")) }
+            val isArrayAccess = { str: String -> str.matches(Regex("""[a-zA-Z_][a-zA-Z0-9_]*\[[^\[\]]+]""")) }
 
             fun parseArrayIndex(expr: String): Pair<String, Int> {
-                val match = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)]""").find(expr)
+                val match = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\[(.+)]""").find(expr)
                     ?: throw Exception("Invalid array syntax: $expr")
                 val name = match.groupValues[1]
-                val index = match.groupValues[2].toInt()
+                val indexExpr = match.groupValues[2]
+                val index = context.evaluateExpression(indexExpr)
                 return name to index
             }
 
@@ -367,17 +373,19 @@ sealed class CodeBlock {
                 val arr1 = context.arrays[name1] ?: throw Exception("Unknown array: $name1")
                 val arr2 = context.arrays[name2] ?: throw Exception("Unknown array: $name2")
 
+                if (index1 !in arr1.indices || index2 !in arr2.indices)
+                    throw Exception("Array index out of bounds")
+
                 val temp = arr1[index1]
                 arr1[index1] = arr2[index2]
                 arr2[index2] = temp
 
             } else if (!isArrayAccess(f) && !isArrayAccess(s)) {
-                if (!context.variables.containsKey(f) || !context.variables.containsKey(s)) {
-                    throw Exception("Unknown variable(s): $f or $s")
-                }
-                val temp = context.variables[f]!!
-                context.variables[f] = context.variables[s]!!
-                context.variables[s] = temp
+                val var1 = context.variables[f] ?: throw Exception("Unknown variable: $f")
+                val var2 = context.variables[s] ?: throw Exception("Unknown variable: $s")
+
+                context.variables[f] = var2
+                context.variables[s] = var1
 
             } else {
                 throw Exception("Cannot swap array element with variable")

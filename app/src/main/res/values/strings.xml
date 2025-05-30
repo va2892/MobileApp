@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">HITsMobileApp</string>
+
+    <string name="btn_add_variable">+ Var</string>
+    <string name="btn_add_array">+ Arr</string>
+    <string name="btn_add_if">+ If</string>
+    <string name="btn_add_while">+ While</string>
+    <string name="btn_add_for">+ For</string>
+    <string name="btn_assignment">Var =</string>
+    <string name="btn_array_assignment">arr[i] =</string>
+    <string name="btn_array_fill">arr = </string>
+    <string name="btn_swap">Swap</string>
+    <string name="btn_add_expression">+ Expr</string>
+    <string name="btn_run">Run</string>
 </resources>

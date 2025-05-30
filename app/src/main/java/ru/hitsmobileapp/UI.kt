@@ -3,6 +3,7 @@ package ru.hitsmobileapp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -13,9 +14,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
-
-val LightPurple = Color(0xFFE6E6FA)
-val DeepPurple = Color(0xFFB39DDB)
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.zIndex
+import ru.hitsmobileapp.ui.theme.Purple40
+import ru.hitsmobileapp.ui.theme.DeepPurple
+import ru.hitsmobileapp.ui.theme.LightPurple
 
 @Composable
 fun CodeBlockUI(block: CodeBlock, onDelete: () -> Unit) {
@@ -23,7 +35,8 @@ fun CodeBlockUI(block: CodeBlock, onDelete: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .border(1.dp, DeepPurple)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, DeepPurple, RoundedCornerShape(8.dp))
             .background(LightPurple)
             .padding(8.dp)
     ) {
@@ -35,7 +48,7 @@ fun CodeBlockUI(block: CodeBlock, onDelete: () -> Unit) {
                         .align(Alignment.TopEnd)
                         .padding(end = 4.dp)
                         .clickable { onDelete() },
-                    color = Color.DarkGray
+                    color = Color.Black
                 )
             }
 
@@ -65,15 +78,16 @@ fun VariableBlock(block: CodeBlock.VariableDeclaration) {
         label = { Text("int a, b, c") },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .clip(RoundedCornerShape(8.dp)),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = LightPurple,
             unfocusedContainerColor = LightPurple,
-            focusedLabelColor = DeepPurple,
-            unfocusedLabelColor = DeepPurple,
-            focusedBorderColor = DeepPurple,
-            unfocusedBorderColor = DeepPurple
+            focusedLabelColor = Purple40,
+            unfocusedLabelColor = Purple40,
+            focusedBorderColor = Purple40,
+            unfocusedBorderColor = Purple40
         )
     )
 }
@@ -83,13 +97,14 @@ fun AssignmentBlock(block: CodeBlock.Assignment) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .clip(RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = block.variable,
             onValueChange = { block.variable = it },
-            label = { Text("Variable") },
+            label = { Text("Variable", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -97,7 +112,7 @@ fun AssignmentBlock(block: CodeBlock.Assignment) {
         OutlinedTextField(
             value = block.expression,
             onValueChange = { block.expression = it },
-            label = { Text("Expression") },
+            label = { Text("Expression", color = Purple40   ) },
             modifier = Modifier.weight(2f),
             singleLine = true
         )
@@ -112,16 +127,17 @@ fun ExpressionBlockUI(block: CodeBlock.ExpressionBlock) {
         label = { Text("Expression (e.g. (a + b) * 2)") },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .clip(RoundedCornerShape(8.dp)),
         singleLine = false,
         maxLines = 3,
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = LightPurple,
             unfocusedContainerColor = LightPurple,
-            focusedLabelColor = DeepPurple,
-            unfocusedLabelColor = DeepPurple,
-            focusedBorderColor = DeepPurple,
-            unfocusedBorderColor = DeepPurple
+            focusedLabelColor = Purple40,
+            unfocusedLabelColor = Purple40,
+            focusedBorderColor = Purple40,
+            unfocusedBorderColor = Purple40
         )
     )
 }
@@ -133,15 +149,16 @@ fun IfBlockUI(block: CodeBlock.IfBlock) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .border(1.dp, Color.Gray)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, DeepPurple, RoundedCornerShape(8.dp))
             .padding(8.dp)
-            .background(Color(0xFFF0F0F0))
+            .background(LightPurple)
     ) {
         Text("if (...) {", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         Row {
-            OutlinedTextField(value = block.left, onValueChange = { block.left = it }, label = { Text("Left") }, modifier = Modifier.weight(1f))
-            OutlinedTextField(value = block.op, onValueChange = { block.op = it }, label = { Text("Operator") }, modifier = Modifier.weight(1f))
-            OutlinedTextField(value = block.right, onValueChange = { block.right = it }, label = { Text("Right") }, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = block.left, onValueChange = { block.left = it }, label = { Text("Left", color = Purple40) }, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = block.op, onValueChange = { block.op = it }, label = { Text("Operator", color = Purple40) }, modifier = Modifier.weight(1f))
+            OutlinedTextField(value = block.right, onValueChange = { block.right = it }, label = { Text("Right", color = Purple40) }, modifier = Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -159,6 +176,9 @@ fun IfBlockUI(block: CodeBlock.IfBlock) {
             Button(onClick = { block.body.add(CodeBlock.SwapBlock()) }) {
                 Text("swap")
             }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { block.elseIfBlocks.add(CodeBlock.ElseIfBlock()) }) {
                 Text("else if")
             }
@@ -190,9 +210,10 @@ fun ElseIfBlockUI(block: CodeBlock.ElseIfBlock) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .border(1.dp, Color.LightGray)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, DeepPurple, RoundedCornerShape(8.dp))
             .padding(8.dp)
-            .background(Color(0xFFEFEFEF))
+            .background(LightPurple)
     ) {
         Text("else if (...) {", fontWeight = FontWeight.SemiBold)
 
@@ -200,19 +221,19 @@ fun ElseIfBlockUI(block: CodeBlock.ElseIfBlock) {
             OutlinedTextField(
                 value = block.left,
                 onValueChange = { block.left = it },
-                label = { Text("Left") },
+                label = { Text("Left", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.op,
                 onValueChange = { block.op = it },
-                label = { Text("Operator") },
+                label = { Text("Operator", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.right,
                 onValueChange = { block.right = it },
-                label = { Text("Right") },
+                label = { Text("Right", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -245,8 +266,9 @@ fun ElseBlockUI(block: CodeBlock.ElseBlock, onDelete: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .border(1.dp, Color.Gray)
-            .background(Color(0xFFE0E0E0))
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, DeepPurple, RoundedCornerShape(8.dp))
+            .background(LightPurple)
             .padding(8.dp)
     ) {
         Box(Modifier.fillMaxWidth()) {
@@ -255,7 +277,7 @@ fun ElseBlockUI(block: CodeBlock.ElseBlock, onDelete: () -> Unit) {
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .clickable { onDelete() },
-                color = Color.DarkGray
+                color = Color.Black
             )
         }
 
@@ -285,8 +307,9 @@ fun WhileBlockUI(block: CodeBlock.WhileBlock) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .border(1.dp, Color(0xFF8888AA))
-            .background(Color(0xFFE0F7FA))
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, DeepPurple, RoundedCornerShape(8.dp))
+            .background(LightPurple)
             .padding(8.dp)
     ) {
         Text("while (...) {", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -298,19 +321,19 @@ fun WhileBlockUI(block: CodeBlock.WhileBlock) {
             OutlinedTextField(
                 value = block.left,
                 onValueChange = { block.left = it },
-                label = { Text("Left") },
+                label = { Text("Left", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.op,
                 onValueChange = { block.op = it },
-                label = { Text("Operator") },
+                label = { Text("Operator", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.right,
                 onValueChange = { block.right = it },
-                label = { Text("Right") },
+                label = { Text("Right", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -343,35 +366,41 @@ fun ForBlockUI(block: CodeBlock.ForBlock) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .border(1.dp, Color(0xFF9C27B0))
-            .background(Color(0xFFF3E5F5))
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, DeepPurple, RoundedCornerShape(8.dp))
+            .background(LightPurple)
             .padding(8.dp)
     ) {
-        Text("for (...) {", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(
+            "for (...) {",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black
+        )
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = block.variable,
                 onValueChange = { block.variable = it },
-                label = { Text("Variable (e.g. i)") },
+                label = { Text("Variable (e.g. i)", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.from,
                 onValueChange = { block.from = it },
-                label = { Text("From") },
+                label = { Text("From", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.to,
                 onValueChange = { block.to = it },
-                label = { Text("To") },
+                label = { Text("To", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
             OutlinedTextField(
                 value = block.step,
                 onValueChange = { block.step = it },
-                label = { Text("Step") },
+                label = { Text("Step", color = Purple40) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -403,13 +432,14 @@ fun ArrayDeclarationBlock(block: CodeBlock.ArrayDeclaration) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .clip(RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = block.name,
             onValueChange = { block.name = it },
-            label = { Text("Array Name") },
+            label = { Text("Array Name", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -417,7 +447,7 @@ fun ArrayDeclarationBlock(block: CodeBlock.ArrayDeclaration) {
         OutlinedTextField(
             value = block.size,
             onValueChange = { block.size = it },
-            label = { Text("Size (e.g. 5)") },
+            label = { Text("Size (e.g. 5)", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -429,13 +459,14 @@ fun ArrayAssignmentBlock(block: CodeBlock.ArrayAssignment) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .clip(RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = block.name,
             onValueChange = { block.name = it },
-            label = { Text("Array Name") },
+            label = { Text("Array Name", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -443,7 +474,7 @@ fun ArrayAssignmentBlock(block: CodeBlock.ArrayAssignment) {
         OutlinedTextField(
             value = block.index,
             onValueChange = { block.index = it },
-            label = { Text("Index") },
+            label = { Text("Index", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -451,7 +482,7 @@ fun ArrayAssignmentBlock(block: CodeBlock.ArrayAssignment) {
         OutlinedTextField(
             value = block.expression,
             onValueChange = { block.expression = it },
-            label = { Text("Expression") },
+            label = { Text("Expression", color = Purple40) },
             modifier = Modifier.weight(2f),
             singleLine = true
         )
@@ -463,13 +494,14 @@ fun SwapBlockUI(block: CodeBlock.SwapBlock) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp),
+            .padding(4.dp)
+            .clip(RoundedCornerShape(8.dp)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = block.first,
             onValueChange = { block.first = it },
-            label = { Text("First (a or arr[0])") },
+            label = { Text("First (a or arr[0])", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -477,7 +509,7 @@ fun SwapBlockUI(block: CodeBlock.SwapBlock) {
         OutlinedTextField(
             value = block.second,
             onValueChange = { block.second = it },
-            label = { Text("Second (b or arr[1])") },
+            label = { Text("Second (b or arr[1])", color = Purple40) },
             modifier = Modifier.weight(1f),
             singleLine = true
         )
@@ -489,18 +521,88 @@ fun ArrayFillBlockUI(block: CodeBlock.ArrayFillBlock) {
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(4.dp)
+        .clip(RoundedCornerShape(8.dp))
     ) {
         OutlinedTextField(
             value = block.name,
             onValueChange = { block.name = it },
-            label = { Text("Array name (e.g. arr)") },
+            label = { Text("Array name (e.g. arr)", color = Purple40) },
             modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
             value = block.values,
             onValueChange = { block.values = it },
-            label = { Text("Values (e.g. 5, 3, 2)") },
+            label = { Text("Values (e.g. 5, 3, 2)", color = Purple40) },
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
+
+@Composable
+fun DraggableCodeBlocks(codeBlocks: SnapshotStateList<CodeBlock>) {
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+
+    val itemHeightPx = with(LocalDensity.current) { 120.dp.toPx() }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        codeBlocks.mapIndexed { index, block ->
+            val isDragging = index == draggingIndex
+
+            Box(
+                modifier = Modifier
+                    .zIndex(if (isDragging) 1f else 0f)
+                    .graphicsLayer {
+                        translationY = if (isDragging) dragOffset else 0f
+                    }
+                    .fillMaxWidth()
+                    .background(
+                        if (isDragging) MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        else MaterialTheme.colorScheme.surface,
+                        RoundedCornerShape(8.dp)
+                    )
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDragStart = {
+                                draggingIndex = index
+                                dragOffset = 0f
+                            },
+                            onDragEnd = {
+                                draggingIndex = null
+                                dragOffset = 0f
+                            },
+                            onDragCancel = {
+                                draggingIndex = null
+                                dragOffset = 0f
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                dragOffset += dragAmount.y
+
+                                val currentIndex = draggingIndex ?: return@detectDragGestures
+                                val targetIndex = ((currentIndex + dragOffset / itemHeightPx).toInt())
+                                    .coerceIn(0, codeBlocks.lastIndex)
+
+                                if (targetIndex != currentIndex) {
+                                    codeBlocks.swap(currentIndex, targetIndex)
+                                    draggingIndex = targetIndex
+                                    dragOffset -= (targetIndex - currentIndex) * itemHeightPx
+                                }
+                            }
+                        )
+                    }
+                    .padding(8.dp)
+            ) {
+                CodeBlockUI(block, onDelete = { codeBlocks.remove(block) })
+            }
+        }
+    }
+}
+
+fun <T> SnapshotStateList<T>.swap(i: Int, j: Int) {
+    if (i == j) return
+    val temp = this[i]
+    this[i] = this[j]
+    this[j] = temp
+}
+

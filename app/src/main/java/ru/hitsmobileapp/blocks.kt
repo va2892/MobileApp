@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,9 +26,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ru.hitsmobileapp.ui.theme.Purple40
 
 @Composable
 fun CodeBlockInterpreter() {
@@ -40,35 +46,69 @@ fun CodeBlockInterpreter() {
             .padding(16.dp)
             .padding(vertical = 40.dp)
     ) {
-        Text("CodeBlock Visual Interpreter", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { codeBlocks += CodeBlock.VariableDeclaration() }) { Text("+ Var") }
-            Button(onClick = { codeBlocks += CodeBlock.ArrayDeclaration() }) { Text("+ Arr") }
+
+        @OptIn(ExperimentalMaterial3Api::class)
+        @Composable
+        fun BottomSheetMenu(
+            sheetVisible: Boolean,
+            onDismiss: () -> Unit,
+            onActionSelected: (String) -> Unit
+        ) {
+            if (!sheetVisible) return
+
+            ModalBottomSheet(
+                onDismissRequest = onDismiss,
+                sheetState = rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text("Меню операций", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Spacer(Modifier.height(12.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { codeBlocks += CodeBlock.VariableDeclaration() }) { Text(stringResource(id = R.string.btn_add_variable)) }
+                        Button(onClick = { codeBlocks += CodeBlock.ArrayDeclaration() }) { Text(stringResource(id = R.string.btn_add_array)) }
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { codeBlocks += CodeBlock.IfBlock() }) { Text(stringResource(id = R.string.btn_add_if)) }
+                        Button(onClick = { codeBlocks += CodeBlock.WhileBlock() }) { Text(stringResource(id = R.string.btn_add_while)) }
+                        Button(onClick = { codeBlocks += CodeBlock.ForBlock() }) { Text(stringResource(id = R.string.btn_add_for)) }
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text(stringResource(id = R.string.btn_assignment)) }
+                        Button(onClick = { codeBlocks += CodeBlock.ArrayAssignment() }) { Text(stringResource(id = R.string.btn_array_assignment)) }
+                        Button(onClick = { codeBlocks += CodeBlock.ArrayFillBlock() }) { Text(stringResource(id = R.string.btn_array_fill)) }
+                    }
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { codeBlocks += CodeBlock.SwapBlock() }) { Text(stringResource(id = R.string.btn_swap)) }
+                        Button(onClick = { codeBlocks += CodeBlock.ExpressionBlock() }) { Text(stringResource(id = R.string.btn_add_expression)) }
+                    }
+                }
+            }
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { codeBlocks += CodeBlock.IfBlock() }) { Text("+ If") }
-            Button(onClick = { codeBlocks += CodeBlock.WhileBlock() }) { Text("+ While") }
-            Button(onClick = { codeBlocks += CodeBlock.ForBlock() }) { Text("+ For") }
-        }
+        var sheetVisible by remember { mutableStateOf(false) }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { codeBlocks += CodeBlock.Assignment() }) { Text("Var =") }
-            Button(onClick = { codeBlocks += CodeBlock.ArrayAssignment() }) { Text("arr[i] =") }
-            Button(onClick = { codeBlocks += CodeBlock.ArrayFillBlock() }) { Text("arr = ") }
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { codeBlocks += CodeBlock.SwapBlock() }) { Text("Swap") }
-            Button(onClick = { codeBlocks += CodeBlock.ExpressionBlock() }) { Text("+ Expr") }
+            Button(onClick = { sheetVisible = true }, colors = ButtonDefaults.buttonColors(Color.Transparent)
+            ) {
+                Text("≡", fontSize = 55.sp, color = Purple40)
+            }
+            Text("CodeBlock Visual Interpreter", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 35.dp))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        codeBlocks.forEach { block ->
-            CodeBlockUI(block, onDelete = { codeBlocks.remove(block) })
-        }
+        DraggableCodeBlocks(codeBlocks)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -93,7 +133,7 @@ fun CodeBlockInterpreter() {
             } catch (e: Exception) {
                 error = e.message
             }
-        }) { Text("Run") }
+        }) { Text(stringResource(id = R.string.btn_run)) }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -104,6 +144,21 @@ fun CodeBlockInterpreter() {
             Text("Output:", fontWeight = FontWeight.Bold)
             Text(output)
         }
+
+        BottomSheetMenu(
+            sheetVisible = sheetVisible,
+            onDismiss = { sheetVisible = false },
+            onActionSelected = { action ->
+                when (action) {
+                    "settings" -> {
+                        // TODO: Настройки
+                    }
+                    "about" -> {
+                        // TODO: О приложении
+                    }
+                }
+            }
+        )
     }
 }
 

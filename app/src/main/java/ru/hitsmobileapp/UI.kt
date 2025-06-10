@@ -605,4 +605,3 @@ fun <T> SnapshotStateList<T>.swap(i: Int, j: Int) {
     this[i] = this[j]
     this[j] = temp
 }
-
